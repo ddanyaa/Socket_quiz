@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+    <title>Socket Quiz</title>
+</head>
+<style>
+    input[type=text], select {
+        width: 50%;
+        padding: 12px 20px;
+        margin: 8px 0;
+        display: inline-block;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    input[type=submit] {
+        width: 50%;
+        background-color: rgba(0, 0, 0, 0.125);
+        color: white;
+        padding: 14px 20px;
+        margin: 8px 0;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    input[type=submit]:hover {
+        background-color: rgba(0, 0, 0, 0.125);
+    }
+</style>
+<body>
+<center>
+    <div style="width: 60rem;">
+        <div style="background-color:#212529; color:#FFF "><br>
+            <h1> Socket Quiz</h1><br>
+        </div>
+        <div style="background-color:#e8e9eb "><br>
+            <div id="greeting">
+                <p id="questionPending" style="font-size:26px;">Получение вопроса...</p>
+                <label for="username" style="font-size:26px;">Введите имя:</label> <input type="text" id="username">
+            </div>
+            <br>
+
+
+            <div id="shortAnswer">
+                <form id="shortAnswers" action="">
+                    Вопрос: <span id="question" style="font-size:25px;"></span> <br/>
+                    <label for="answer" style="font-size:26px;">Ответ:</label> <input type="text" id="answer"> <br/>
+                    <input id="submitShortAnswer" style="background-color: #212529; color: white; font-size:20px;"
+                           type="submit">
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    </div>
+    <div id="result"></div>
+    <div id="answerText"></div>
+    <br/><br/>
+
+
+    <div id="timer"></div>
+</center>
+<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+
+
+<script>
+
+    //Подключение
+    var socket = io();
+
+    //Скрыть форму для вопроса
+    $("#shortAnswer").hide()
+
+    // Подтверждение ответа
+    $('#shortAnswers').submit(function () {
+        let answer = $("#answer").val()
+        socket.emit('answerQuestion', {answer, username})
+        return false;
+    });
+
+
+    socket.on('deliverQuestion', function (msg) {
+        if (msg.questionType === "short") {
+
+            username = $("#username").val();
+            $("#greeting").hide();
+            $("#shortAnswer").show();
+            $("#submitAnswer").prop('disabled', false);
+            $('#question').html(msg.question);
+            let counter = msg.timeLimit;
+            let c = msg.timeLimit;
+            let k = setInterval(function () {
+                $("#timer").html(c + " секунд");
+                counter--;
+                c--;
+                if (counter === 0) {
+                    clearInterval(k);
+                    $("#timer").html("");
+                    $("#submitAnswer").prop('disabled', true);
+                    $("#greeting").show();
+                    $("#shortAnswer").hide();
+                }
+            }, 1000);
+
+        }
+
+
+    });
+
+
+    socket.on('resultQuestion', function (msg) {
+        if (msg.correct) {
+            $("#result").html("Овет верный с:");
+        } else {
+            $("#result").html("Ответ неверный :с");
+        }
+        $("#answerText").html("Правильный ответ: " + msg.answer);
+
+    });
+
+</script>
+</body>
+</html>

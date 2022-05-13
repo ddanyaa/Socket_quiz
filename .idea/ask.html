@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+    <title>Socket Quiz</title>
+    <style>
+        .button {
+            background-color: #212529;
+            color: antiquewhite;
+            font-size: 24px;
+        }
+
+        input[type=text], select {
+            width: 50%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type=answer], select {
+            width: 50%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type=submit] {
+            width: 50%;
+            background-color: rgba(0, 0, 0, 0.125);
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input[type=submit]:hover {
+            background-color: rgba(0, 0, 0, 0.125);
+        }
+    </style>
+</head>
+<body>
+<center>
+    <div style="width: 60rem;">
+        <div style="background-color:#212529; color:#FFF "><br>
+            <h1> Socket Quiz</h1><br>
+        </div>
+        <div style="background-color:#e8e9eb ">
+            <br>
+            <button id="shortAnswer" class="button">Начать</button>
+            <br><br>
+            <div id="short">
+                <h2>Введите вопрос и ответ на него:</h2><br>
+                <form id="shortQuestion" action="">
+                    <label for="question" style="font-size:26px;">Вопрос:</label>
+                    <input type="text" id="question"> <br/>
+                    <label for="answer" style="font-size:26px;">Ответ:</label>
+                    <input type="text" id="answer"> <br/>
+                    <label for="timeLimit" style="font-size:26px;">Время на ответ:</label>
+                    <input type="range" step="5" min="10" max="60" id="timeLimit"> <br/><br>
+
+                    <input id="submit" style="background-color: #212529; color: white; font-size:20px;" type="submit">
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="gameSummary">
+        <p id="totalAnswers"></p>
+        <p id="correctAnswers"></p>
+        <p id="incorrectAnswers"></p>
+        <p id="correctUsers"></p>
+        <p id="correctAverage"></p>
+        <p id="incorrectUsers"></p>
+    </div>
+
+    <p id="timer"></p>
+</center>
+<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script>
+
+
+    var socket = io();
+    $("#short").hide();
+    $("#gameSummary").hide();
+    $("#shortAnswer").click(function () {
+        $("#short").show()
+    });
+
+
+    $("#reset").click(function () {
+        $("#gameSelection").show();
+        $("#gameSummary").hide();
+    });
+
+
+    $('#shortQuestion').submit(function () {
+        $("#gameSelection").hide();
+        $("#short").hide();
+        $("#gameSummary").show();
+        socket.emit('submitQuestion',
+            {
+                question: $("#question").val(),
+                answer: $("#answer").val(),
+                timeLimit: $("#timeLimit").val(),
+                questionType: "short"
+            });
+        $("#reset").prop('disabled', true);
+        let counter = $("#timeLimit").val();
+        let c = $("#timeLimit").val();
+        let k = setInterval(function () {
+            $("#timer").html(c + "sec");
+            counter--;
+            c--;
+            if (counter === 0) {
+                clearInterval(k);
+                $("#timer").html("");
+                $("#reset").prop('disabled', false);
+            }
+        }, 1000);
+
+
+        return false;
+    });
+
+
+    socket.on('deliverData', function (data) {
+        console.log(data);
+
+
+        let total = $("#totalAnswers").val() + data.totalAnswers;
+        let correctAns = $("#correctAnswers").val() + data.correctAnswers;
+        let incorrectAns = $("#incorrectAnswers").val() + data.incorrectAnswers;
+        let correctUsr = data.correctUsers;
+        let incorrectUsr = data.incorrectUsers;
+
+        $("#totalAnswers").html("Всего ответов:" + " " + total);
+        $("#correctAnswers").html("Правильных ответов:" + " " + correctAns);
+        $("#incorrectAnswers").html("Неправильных ответов:" + " " + incorrectAns);
+        $("#correctUsers").html("Ответили правильно:" + " " + correctUsr);
+        $("#incorrectUsers").html("Ответили неправильно:" + " " + incorrectUsr);
+
+    });
+
+
+</script>
+</body>
+</html>
